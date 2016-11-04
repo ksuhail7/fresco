@@ -1,0 +1,10 @@
+spring:
+  application:
+    name: Fresco
+  datasource:
+    url: jdbc:mysql://localhost/fresco
+    username: fresco
+    password: Fresco.7715
+server:
+  port: 9092
+
