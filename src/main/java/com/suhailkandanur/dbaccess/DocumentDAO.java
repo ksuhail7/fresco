@@ -1,5 +1,9 @@
 package com.suhailkandanur.dbaccess;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.simple.SimpleJdbcCall;
+import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.stereotype.Repository;
 
 /**
@@ -7,4 +11,8 @@ import org.springframework.stereotype.Repository;
  */
 @Repository
 public class DocumentDAO {
+    private SimpleJdbcInsert insertJdbcCall;
+    private SimpleJdbcCall queryJdbcCall;
+
+
 }

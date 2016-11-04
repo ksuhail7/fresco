@@ -38,7 +38,7 @@ dependencies {
 	compile('org.springframework.boot:spring-boot-starter-data-rest')
 	//compile('org.springframework.boot:spring-boot-devtools')
 	compile('org.springframework.boot:spring-boot-starter-hateoas')
-	//compile('org.springframework.boot:spring-boot-starter-jdbc')
+	compile('org.springframework.boot:spring-boot-starter-jdbc')
 	compile('org.springframework.boot:spring-boot-starter-jta-atomikos')
 	compile('org.springframework.boot:spring-boot-starter-remote-shell')
 	runtime('mysql:mysql-connector-java')

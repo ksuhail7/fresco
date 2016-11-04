@@ -5,7 +5,7 @@ package com.suhailkandanur.util;
  */
 public interface Lock {
     boolean isLocked();
-    void lock();
+    void lock() throws Exception;
     boolean tryLock();
     void release();
 }
