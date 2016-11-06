@@ -1,3 +1,5 @@
+CREATE DATABASE  IF NOT EXISTS `fresco` /*!40100 DEFAULT CHARACTER SET utf8 */;
+USE `fresco`;
 -- MySQL dump 10.13  Distrib 5.7.16, for osx10.12 (x86_64)
 --
 -- Host: localhost    Database: fresco
@@ -62,8 +64,7 @@ DROP TABLE IF EXISTS `document_version`;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `document_version` (
   `id` int(11) NOT NULL,
-  `docid` int(11) NOT NULL,
-  `version` mediumtext NOT NULL,
+  `version` bigint(20) NOT NULL,
   `filename` varchar(64) NOT NULL,
   `filesize_in_bytes` mediumtext,
   `mimetype` varchar(64) DEFAULT NULL,
@@ -74,9 +75,7 @@ CREATE TABLE `document_version` (
   `updated_by` varchar(45) NOT NULL,
   `is_active` tinyint(1) DEFAULT '1',
   PRIMARY KEY (`id`),
-  UNIQUE KEY `document_versions_id_uindex` (`id`),
-  KEY `document_versions_document_id_fk` (`docid`),
-  CONSTRAINT `document_versions_document_id_fk` FOREIGN KEY (`docid`) REFERENCES `document` (`id`)
+  UNIQUE KEY `document_versions_id_uindex` (`id`,`version`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -160,6 +159,75 @@ CREATE TABLE `store` (
 --
 -- Dumping routines for database 'fresco'
 --
+/*!50003 DROP PROCEDURE IF EXISTS `create_document` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8 */ ;
+/*!50003 SET character_set_results = utf8 */ ;
+/*!50003 SET collation_connection  = utf8_general_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+CREATE DEFINER=`root`@`localhost` PROCEDURE `create_document`(
+IN docid varchar(128),
+IN storeid int,
+IN docid_sha1 varchar(40),
+IN version long,
+IN filename varchar(128),
+IN filesize int,
+IN mimetype varchar(128),
+IN sha1cksum varchar(40),
+IN requestor varchar(64),
+IN is_active boolean,
+OUT docref int
+)
+BEGIN
+	DECLARE `_rollback` BOOL DEFAULT 0;
+    declare creation_time datetime default now();
+    declare docRefKey varchar(20) default 'documentRef';
+    DECLARE CONTINUE HANDLER FOR SQLEXCEPTION SET `_rollback` = 1;
+	if is_active is null then
+		select is_active = true;
+	end if;
+    
+    call gen_id(docRefKey, docref);
+    start transaction;
+    insert into document
+    (id, docid, storeid, creation_date, created_by, update_date, updated_by, docid_sha1, is_active)
+    values
+    (docref, docid, storeid, creation_time, requestor,
+    creation_time,
+    requestor,
+    docid_sha1,
+    is_active);
+    
+    insert into document_version
+    (id, version, filename, filesize_in_bytes, mimetype,
+    sha1_checksum, creation_date, created_by, update_date, updated_by, is_active)
+    values
+    (docref,
+    version, 
+    filename,
+    filesize,
+    mimetype,
+    sha1cksum,
+    creation_time,
+    requestor,
+    creation_time,
+    requestor,
+    is_active);
+    IF `_rollback` THEN
+        ROLLBACK;
+    ELSE
+        COMMIT;
+    END IF;
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
 /*!50003 DROP PROCEDURE IF EXISTS `gen_id` */;
 /*!50003 SET @saved_cs_client      = @@character_set_client */ ;
 /*!50003 SET @saved_cs_results     = @@character_set_results */ ;
@@ -195,4 +263,4 @@ DELIMITER ;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2016-11-05 21:32:03
+-- Dump completed on 2016-11-05 22:16:10
