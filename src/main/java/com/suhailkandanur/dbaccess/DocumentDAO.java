@@ -26,7 +26,7 @@ public class DocumentDAO implements InitializingBean {
 
     private static final RowMapper<Document> docRowMapper = (rs, rowNum) -> {
         Document doc = new Document(rs.getInt("id"),
-                rs.getInt("storeid")
+                rs.getInt("storeid"),
                 rs.getString("docid"), rs.getString("docid_sha1"),
                 rs.getString("created_by"),
                 rs.getDate("creation_date"),

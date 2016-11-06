@@ -35,7 +35,7 @@ public class FrescoRepositoryController {
     }
 
     @RequestMapping(method = RequestMethod.POST)
-    public boolean createRepository(String name, String description) {
+    public int createRepository(String name, String description) {
         return repositoryDAO.createRepository(name, description, System.getProperty("user.name"));
     }
 }
