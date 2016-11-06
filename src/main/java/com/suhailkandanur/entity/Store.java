@@ -13,13 +13,15 @@ public class Store {
     private String createdBy;
     private Date creationTime;
     private String updatedBy;
-    private String updateTime;
+    private Date updateTime;
+    private boolean isActive;
 
-    public Store(int storeId, int repositoryId, String name, String description, String createdBy, Date creationTime, String updatedBy, String updateTime) {
+    public Store(int storeId, int repositoryId, String name, String description, boolean isActive, String createdBy, Date creationTime, String updatedBy, Date updateTime) {
         this.storeId = storeId;
         this.repositoryId = repositoryId;
         this.name = name;
         this.description = description;
+        this.isActive = isActive;
         this.createdBy = createdBy;
         this.creationTime = creationTime;
         this.updatedBy = updatedBy;
@@ -54,7 +56,11 @@ public class Store {
         return updatedBy;
     }
 
-    public String getUpdateTime() {
+    public Date getUpdateTime() {
         return updateTime;
+    }
+
+    public boolean isActive() {
+        return isActive;
     }
 }

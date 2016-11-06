@@ -7,6 +7,7 @@ import java.util.Date;
  */
 public class Document {
     private int docRef;
+    private int storeId;
     private String docId;
     private String docIdSha1;
     private String createdBy;
@@ -14,8 +15,9 @@ public class Document {
     private String updatedBy;
     private Date updateTime;
 
-    public Document(int doc_ref, String docid, String docid_sha1, String created_by, Date creation_time, String updated_by, Date update_time) {
+    public Document(int doc_ref, int storeId, String docid, String docid_sha1, String created_by, Date creation_time, String updated_by, Date update_time) {
         this.docRef = doc_ref;
+        this.storeId = storeId;
         this.docId = docid;
         this.docIdSha1 = docid_sha1;
         this.createdBy = created_by;
@@ -50,5 +52,9 @@ public class Document {
 
     public Date getUpdateTime() {
         return updateTime;
+    }
+
+    public int getStoreId() {
+        return storeId;
     }
 }

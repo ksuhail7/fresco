@@ -5,7 +5,7 @@ import java.util.Date;
 /**
  * Created by suhail on 2016-11-03.
  */
-public class Repository {
+public class Repo {
     private int repositoryId;
     private String name;
     private String description;
@@ -15,7 +15,7 @@ public class Repository {
     private String updatedBy;
     private Date updateTime;
 
-    public Repository(int repositoryId, String name, String description, boolean isActive, String createdBy, Date creationTime, String updatedBy, Date updateTime) {
+    public Repo(int repositoryId, String name, String description, boolean isActive, String createdBy, Date creationTime, String updatedBy, Date updateTime) {
         this.repositoryId = repositoryId;
         this.name = name;
         this.description = description;

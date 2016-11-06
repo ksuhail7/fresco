@@ -2,7 +2,7 @@ spring:
   application:
     name: Fresco
   datasource:
-    url: jdbc:mysql://localhost/fresco
+    url: jdbc:mysql://localhost/fresco?noAccessToProcedureBodies=true
     username: fresco
     password: Fresco.7715
 server:
