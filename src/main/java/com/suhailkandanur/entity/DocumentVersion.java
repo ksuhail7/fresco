@@ -3,33 +3,45 @@ package com.suhailkandanur.entity;
 import java.util.Date;
 
 /**
- * Created by suhail on 2016-11-03.
+ * Created by suhail on 2016-11-06.
  */
 public class DocumentVersion {
     private int docRef;
+    private long version;
     private String fileName;
     private long fileSize;
-    private long version;
+    private String mimeType;
     private String sha1Cksum;
+    private Date creationDate;
     private String createdBy;
-    private Date creationTime;
+    private Date updateDate;
     private String updatedBy;
-    private Date updateTime;
+    private boolean isActive;
 
-    public DocumentVersion(int docRef, String fileName, long fileSize, long version, String sha1Cksum, String createdBy, Date creationTime, String updatedBy, Date updateTime) {
+    public DocumentVersion(int docRef, long version, String fileName, long fileSize, String mimeType, String sha1Cksum, Date creationDate, String createdBy, Date updateDate, String updatedBy, boolean isActive) {
         this.docRef = docRef;
+        this.version = version;
         this.fileName = fileName;
         this.fileSize = fileSize;
-        this.version = version;
+        this.mimeType = mimeType;
         this.sha1Cksum = sha1Cksum;
+        this.creationDate = creationDate;
         this.createdBy = createdBy;
-        this.creationTime = creationTime;
+        this.updateDate = updateDate;
         this.updatedBy = updatedBy;
-        this.updateTime = updateTime;
+        this.isActive = isActive;
+    }
+
+    public boolean isActive() {
+        return isActive;
     }
 
     public int getDocRef() {
         return docRef;
+    }
+
+    public long getVersion() {
+        return version;
     }
 
     public String getFileName() {
@@ -40,27 +52,27 @@ public class DocumentVersion {
         return fileSize;
     }
 
-    public long getVersion() {
-        return version;
+    public String getMimeType() {
+        return mimeType;
     }
 
     public String getSha1Cksum() {
         return sha1Cksum;
     }
 
+    public Date getCreationDate() {
+        return creationDate;
+    }
+
     public String getCreatedBy() {
         return createdBy;
     }
 
-    public Date getCreationTime() {
-        return creationTime;
+    public Date getUpdateDate() {
+        return updateDate;
     }
 
     public String getUpdatedBy() {
         return updatedBy;
-    }
-
-    public Date getUpdateTime() {
-        return updateTime;
     }
 }

@@ -194,7 +194,7 @@ BEGIN
     call gen_id(docRefKey, docref);
     start transaction;
     insert into document
-    (id, docid, storeid, creation_date, created_by, update_date, updated_by, docid_sha1, is_active)
+    (docref, docid, storeid, creation_date, created_by, update_date, updated_by, docid_sha1, is_active)
     values
     (docref, docid, storeid, creation_time, requestor,
     creation_time,
@@ -203,7 +203,7 @@ BEGIN
     is_active);
     
     insert into document_version
-    (id, version, filename, filesize_in_bytes, mimetype,
+    (docref, version, filename, filesize_in_bytes, mimetype,
     sha1_checksum, creation_date, created_by, update_date, updated_by, is_active)
     values
     (docref,
