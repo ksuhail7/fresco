@@ -39,17 +39,17 @@ DROP TABLE IF EXISTS `document`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `document` (
-  `id` int(11) NOT NULL,
+  `docref` int(11) NOT NULL,
   `docid` varchar(128) NOT NULL,
   `storeid` int(11) NOT NULL,
   `creation_date` datetime NOT NULL,
-  `created_by` varchar(32) NOT NULL,
+  `created_by` varchar(64) NOT NULL,
   `update_date` datetime NOT NULL,
-  `updated_by` varchar(45) NOT NULL,
+  `updated_by` varchar(64) NOT NULL,
   `docid_sha1` varchar(40) NOT NULL,
-  `is_active` tinyint(4) DEFAULT NULL,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `document_id_uindex` (`id`),
+  `is_active` tinyint(1) DEFAULT NULL,
+  PRIMARY KEY (`docref`),
+  UNIQUE KEY `document_id_uindex` (`docref`),
   KEY `document_store_id_fk` (`storeid`),
   CONSTRAINT `document_store_id_fk` FOREIGN KEY (`storeid`) REFERENCES `store` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
@@ -63,19 +63,21 @@ DROP TABLE IF EXISTS `document_version`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `document_version` (
-  `id` int(11) NOT NULL,
+  `docref` int(11) NOT NULL,
   `version` bigint(20) NOT NULL,
-  `filename` varchar(64) NOT NULL,
-  `filesize_in_bytes` mediumtext,
+  `filename` varchar(128) NOT NULL,
+  `filesize_in_bytes` bigint(20) DEFAULT NULL,
   `mimetype` varchar(64) DEFAULT NULL,
-  `sha1_checksum` varchar(128) DEFAULT NULL,
+  `sha1_checksum` char(40) DEFAULT NULL,
   `creation_date` datetime NOT NULL,
-  `created_by` varchar(32) NOT NULL,
+  `created_by` varchar(64) NOT NULL,
   `update_date` datetime DEFAULT NULL,
-  `updated_by` varchar(45) NOT NULL,
+  `updated_by` varchar(64) NOT NULL,
   `is_active` tinyint(1) DEFAULT '1',
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `document_versions_id_uindex` (`id`,`version`)
+  PRIMARY KEY (`docref`),
+  UNIQUE KEY `document_versions_id_uindex` (`docref`,`version`),
+  CONSTRAINT `docref` FOREIGN KEY (`docref`) REFERENCES `document` (`docref`) ON DELETE NO ACTION ON UPDATE NO ACTION,
+  CONSTRAINT `document_version_document_docref_fk` FOREIGN KEY (`docref`) REFERENCES `document` (`docref`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -172,12 +174,12 @@ DELIMITER ;;
 CREATE DEFINER=`root`@`localhost` PROCEDURE `create_document`(
 IN docid varchar(128),
 IN storeid int,
-IN docid_sha1 varchar(40),
+IN docid_sha1 char(40),
 IN version long,
 IN filename varchar(128),
-IN filesize int,
+IN filesize bigint,
 IN mimetype varchar(128),
-IN sha1cksum varchar(40),
+IN sha1cksum char(40),
 IN requestor varchar(64),
 IN is_active boolean,
 OUT docref int
@@ -263,4 +265,4 @@ DELIMITER ;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2016-11-05 22:16:10
+-- Dump completed on 2016-11-06 22:09:42
