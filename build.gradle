@@ -41,6 +41,7 @@ dependencies {
 	compile('org.springframework.boot:spring-boot-starter-jdbc')
 	compile('org.springframework.boot:spring-boot-starter-jta-atomikos')
 	compile('org.springframework.boot:spring-boot-starter-remote-shell')
+	compile group: 'org.apache.tika', name: 'tika-core', version: '1.13'
 	runtime('mysql:mysql-connector-java')
 	testCompile('org.springframework.boot:spring-boot-starter-test')
 }

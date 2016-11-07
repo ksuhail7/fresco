@@ -28,8 +28,7 @@ public class GenIdDAO implements InitializingBean {
     public int generateId(String parameter) {
         SqlParameterSource in = new MapSqlParameterSource()
                 .addValue("parameter", parameter);
-        Map output = jdbcCall.execute(Integer.class, in);
-
+        Map output = jdbcCall.execute(in);
         return (int) output.get("value");
     }
 

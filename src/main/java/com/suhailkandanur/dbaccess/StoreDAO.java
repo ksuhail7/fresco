@@ -8,12 +8,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.jdbc.core.simple.SimpleJdbcCall;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.stereotype.Repository;
 
 import javax.sql.DataSource;
 import java.util.*;
+
+import static org.bouncycastle.asn1.ua.DSTU4145NamedCurves.params;
 
 /**
  * Created by suhail on 2016-11-03.
@@ -61,9 +65,17 @@ public class StoreDAO implements InitializingBean {
     }
 
     public int createStore(Store store) {
-        Map<String, Object> params = new HashMap<>();
+        SqlParameterSource parameters = new MapSqlParameterSource()
+                .addValue("id", store.getStoreId())
+                .addValue("name", store.getName())
+                .addValue("repo_id", store.getRepositoryId())
+                .addValue("creation_date", store.getCreationTime())
+                .addValue("created_by", store.getCreatedBy())
+                .addValue("update_date", store.getUpdateTime())
+                .addValue("updated_by", store.getUpdatedBy())
+                .addValue("is_active", store.isActive());
         try {
-            int rowsInserted = this.jdbcInsert.execute(params);
+            int rowsInserted = this.jdbcInsert.execute(parameters);
             if (rowsInserted == 1) {
                 logger.info("store with id '{}' created, no. of rows inserted {}", store.getStoreId(), rowsInserted);
                 return store.getStoreId();
@@ -74,13 +86,13 @@ public class StoreDAO implements InitializingBean {
         return -1;
     }
 
-    public int createStore(String storeName, String description, int repoId, String requestor) {
+    public int createStore(String storeName, String description, int repoId, String requester) {
         Date now = new Date();
-        Store store = new Store(genIdDAO.generateId("store_id"), repoId, storeName, description, true, requestor, now, requestor, now);
+        Store store = new Store(genIdDAO.generateId("store_id"), repoId, storeName, description, true, requester, now, requester, now);
         return createStore(store);
     }
 
-    public boolean updateStore(Store store) {
-        return false;
-    }
+   // public boolean updateStore(Store store) {
+     //   return false;
+    //}
 }
