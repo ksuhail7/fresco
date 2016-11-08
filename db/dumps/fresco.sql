@@ -74,10 +74,8 @@ CREATE TABLE `document_version` (
   `update_date` datetime DEFAULT NULL,
   `updated_by` varchar(64) NOT NULL,
   `is_active` tinyint(1) DEFAULT '1',
-  PRIMARY KEY (`docref`),
   UNIQUE KEY `document_versions_id_uindex` (`docref`,`version`),
-  CONSTRAINT `docref` FOREIGN KEY (`docref`) REFERENCES `document` (`docref`) ON DELETE NO ACTION ON UPDATE NO ACTION,
-  CONSTRAINT `document_version_document_docref_fk` FOREIGN KEY (`docref`) REFERENCES `document` (`docref`)
+  CONSTRAINT `docref` FOREIGN KEY (`docref`) REFERENCES `document` (`docref`) ON DELETE NO ACTION ON UPDATE NO ACTION
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -146,11 +144,12 @@ CREATE TABLE `store` (
   `id` int(11) NOT NULL,
   `name` varchar(64) NOT NULL,
   `repo_id` int(11) NOT NULL,
-  `creation_date` datetime NOT NULL,
+  `description` varchar(255) DEFAULT NULL,
   `created_by` varchar(32) NOT NULL,
   `is_active` tinyint(1) DEFAULT '1',
   `updated_by` varchar(45) NOT NULL,
-  `update_time` datetime NOT NULL,
+  `update_date` datetime NOT NULL,
+  `creation_date` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE KEY `id_UNIQUE` (`id`),
   KEY `store_repository_id_fk` (`repo_id`),
@@ -185,17 +184,27 @@ IN is_active boolean,
 OUT docref int
 )
 BEGIN
-	DECLARE `_rollback` BOOL DEFAULT 0;
     declare creation_time datetime default now();
-    declare docRefKey varchar(20) default 'documentRef';
-    DECLARE CONTINUE HANDLER FOR SQLEXCEPTION SET `_rollback` = 1;
+    declare docRefKey varchar(20) default 'document_ref';
+    
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION 
+    BEGIN
+    ROLLBACK;
+    RESIGNAL;
+    END;
+    
 	if is_active is null then
 		select is_active = true;
 	end if;
     
-    call gen_id(docRefKey, docref);
+    -- if not exists (select 1 from document where docid = docid and storeid = storeid) then
+		call gen_id('document_ref', docref);
+	-- end if;
+	
+    
     start transaction;
-    insert into document
+    -- if not exists (select 1 from document where docid = docid and storeid = storeid) then
+        insert into document
     (docref, docid, storeid, creation_date, created_by, update_date, updated_by, docid_sha1, is_active)
     values
     (docref, docid, storeid, creation_time, requestor,
@@ -203,6 +212,7 @@ BEGIN
     requestor,
     docid_sha1,
     is_active);
+    -- end if;
     
     insert into document_version
     (docref, version, filename, filesize_in_bytes, mimetype,
@@ -219,11 +229,8 @@ BEGIN
     creation_time,
     requestor,
     is_active);
-    IF `_rollback` THEN
-        ROLLBACK;
-    ELSE
-        COMMIT;
-    END IF;
+    
+    COMMIT;
 END ;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -265,4 +272,4 @@ DELIMITER ;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2016-11-06 22:09:42
+-- Dump completed on 2016-11-07 21:02:22

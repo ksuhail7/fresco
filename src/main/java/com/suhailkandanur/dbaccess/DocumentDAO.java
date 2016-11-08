@@ -13,6 +13,7 @@ import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.sql.DataSource;
@@ -76,6 +77,10 @@ public class DocumentDAO implements InitializingBean {
     private SimpleJdbcInsert insertDocumentJdbc;
     private SimpleJdbcInsert insertDocumentVersionJdbc;
 
+
+    @Autowired
+    private PlatformTransactionManager transactionManager;
+
     @Autowired
     private DataSource dataSource;
 
@@ -109,7 +114,7 @@ public class DocumentDAO implements InitializingBean {
 
     private List<Document> getDocumentsByQuery(String query, Object... args) {
         return Optional.ofNullable(this.jdbcTemplate.query(query, args, docRowMapper)).orElse(Collections.emptyList()).parallelStream().map(document -> {
-            document.addVersions(getDocumentVersions(document.getDocId()));
+            document.addVersions(getDocumentVersions(document.getDocRef()));
             return document;
         }).collect(Collectors.toList());
     }
@@ -135,7 +140,7 @@ public class DocumentDAO implements InitializingBean {
         }
     }
 
-    private List<DocumentVersion> getDocumentVersions(String docRef) {
+    private List<DocumentVersion> getDocumentVersions(int docRef) {
         return Optional.ofNullable(this.jdbcTemplate.query(SELECT_DOC_VERSION_BY_DOCREF, new Object[]{docRef}, docVersionRowMapper))
                 .map(Collections::unmodifiableList)
                 .orElse(Collections.emptyList());
@@ -171,20 +176,20 @@ public class DocumentDAO implements InitializingBean {
             int noRows = insertDocumentJdbc.execute(docParams);
             logger.info("record inserted into document table, no. of rows affected {}", noRows);
         }
-        try {
+      //  try {
             //document already present, insert into document_version
             if (getDocumentVersion(docRef, version) != null) {
                 SqlParameterSource params = new MapSqlParameterSource()
                         .addValue("docref", docRef)
                         .addValue("version", version)
                         .addValue("filename", filename)
-                        .addValue("filesize", filesize)
+                        .addValue("filesize_in_bytes", filesize)
                         .addValue("mimetype", mimetype)
-                        .addValue("sha1cksum", sha1Cksum)
-                       // .addValue("creation_date", createDate)
+                        .addValue("sha1_checksum", sha1Cksum)
+                        .addValue("creation_date", createDate)
                         .addValue("created_by", requestor)
                         .addValue("update_date", createDate)
-                        .addValue("updated_by", createDate)
+                        .addValue("updated_by", requestor)
                         .addValue("is_active", isActive);
 
                 int noRows = insertDocumentVersionJdbc.execute(params);
@@ -194,10 +199,10 @@ public class DocumentDAO implements InitializingBean {
                 logger.error("document version with docref '{}' and version '{}' already exists", docRef, version);
                 return -1;
             }
-        } catch(DataAccessException dae) {
-            logger.error("error creating record in document_version table, error: {}", dae.getMessage());
-            return -1;
-        }
+       // } catch(DataAccessException dae) {
+         //   logger.error("error creating record in document_version table, error: {}", dae.getMessage());
+           // return -1;
+        //}
     }
 
 }
