@@ -1,5 +1,6 @@
 package com.suhailkandanur.dbaccess;
 
+import com.suhailkandanur.entity.FileSystem;
 import com.suhailkandanur.entity.Repo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,7 +14,9 @@ import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.stereotype.Repository;
 
 import javax.sql.DataSource;
+import java.io.File;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.bouncycastle.asn1.x500.style.RFC4519Style.c;
 
@@ -27,10 +30,25 @@ public class RepositoryDAO implements InitializingBean {
     private JdbcTemplate jdbcTemplate;
     private SimpleJdbcInsert jdbcInsert;
 
+    private final static String SELECT_REPO_BASE = "SELECT * FROM repository";
+    private final static String SELECT_ACTIVE_REPO = SELECT_REPO_BASE + " where is_active = 1";
+    private static final String SELECT_REPO_BY_REPOID = SELECT_REPO_BASE + " where id = ? ";
+
+
     private static final RowMapper<Repo> repositoryRowMapper = (rs, rowNum) -> {
         return new Repo(rs.getInt("id"),
                 rs.getString("name"),
                 rs.getString("description"),
+                rs.getBoolean("is_active"),
+                rs.getString("created_by"),
+                rs.getDate("creation_date"),
+                rs.getString("updated_by"),
+                rs.getDate("update_date"));
+    };
+
+    private static final RowMapper<FileSystem> fileSystemRowMapper = (rs, rowNum) -> {
+        return new FileSystem(rs.getInt("id"),
+                rs.getString("path"),
                 rs.getBoolean("is_active"),
                 rs.getString("created_by"),
                 rs.getDate("creation_date"),
@@ -50,20 +68,41 @@ public class RepositoryDAO implements InitializingBean {
         this.jdbcTemplate = new JdbcTemplate(dataSource);
     }
 
-    public List<Repo> getAllRepositories() {
+    public List<FileSystem> getFileSystemsForRepo(int repoId) {
+        return this.jdbcTemplate.query("select fs.* from filesystem fs, repo_fs_mapping rfm " +
+                " where fs.id = rfm.fs_id and rfm.repo_id = ? ", new Object[]{repoId}, fileSystemRowMapper);
+    }
+
+    private List<Repo> getRepositoryGeneric(String sql, Object... args) {
+        logger.info("calling sql {} with args: {}", sql, args);
+         return Optional.ofNullable(this.jdbcTemplate.query(sql, args == null ? null : new Object[]{args}, repositoryRowMapper))
+                 .orElse(Collections.emptyList())
+                 .parallelStream()
+                 .map(repo -> { repo.addFileSystems(getFileSystemsForRepo(repo.getRepositoryId()), true); return repo;})
+                 .collect(Collectors.toList());
+    }
+    public List<Repo> getAllRepositories(boolean activeOnly) {
         if (dataSource == null) {
             logger.error("data source is null");
         }
-        return this.jdbcTemplate.query("select * from repository", repositoryRowMapper);
+        if(activeOnly)
+            return getRepositoryGeneric(SELECT_ACTIVE_REPO, null);
+        return getRepositoryGeneric(SELECT_REPO_BASE, null);
     }
 
-    public Optional<Repo> getRepository(int id) {
-        try {
-            return Optional.ofNullable(this.jdbcTemplate.queryForObject("select * from repository where id = ?", new Object[]{id}, repositoryRowMapper));
-        } catch(EmptyResultDataAccessException dae) {
-            logger.warn("repository for id {} not found", id);
+    public List<Repo> getAllRepositories() {
+        return getAllRepositories(true);
+    }
+
+    public Optional<Repo> getRepository(int repoId) {
+        List<Repo> repoList = getRepositoryGeneric(SELECT_REPO_BY_REPOID, repoId);
+        if(repoList == null || repoList.isEmpty())
             return Optional.empty();
+        if(repoList.size() > 1) {
+            logger.error("multiple repositories found for the same id '{}'", repoId);
+            throw new IllegalStateException("multiple repositories found for the same id '" + repoId + "'");
         }
+        return Optional.ofNullable(repoList.get(0));
     }
 
     public int createRepository(Repo repo) {

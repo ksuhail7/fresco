@@ -24,7 +24,7 @@ public class FrescoRepositoryController {
     @Autowired
     private RepositoryDAO repositoryDAO;
 
-    @RequestMapping(value = "/all", method = RequestMethod.GET)
+    @RequestMapping(method = RequestMethod.GET)
     public List<Repo> getAllRepositories() {
         return repositoryDAO.getAllRepositories();
     }

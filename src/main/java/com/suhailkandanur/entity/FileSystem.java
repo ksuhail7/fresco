@@ -51,4 +51,26 @@ public class FileSystem {
     public Date getUpdateTime() {
         return updateTime;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+
+        if (o == null || getClass() != o.getClass()) return false;
+
+        FileSystem that = (FileSystem) o;
+
+        return new org.apache.commons.lang3.builder.EqualsBuilder()
+                .append(filesystemId, that.filesystemId)
+                .append(path, that.path)
+                .isEquals();
+    }
+
+    @Override
+    public int hashCode() {
+        return new org.apache.commons.lang3.builder.HashCodeBuilder(17, 37)
+                .append(filesystemId)
+                .append(path)
+                .toHashCode();
+    }
 }

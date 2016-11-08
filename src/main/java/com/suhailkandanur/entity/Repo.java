@@ -1,6 +1,6 @@
 package com.suhailkandanur.entity;
 
-import java.util.Date;
+import java.util.*;
 
 /**
  * Created by suhail on 2016-11-03.
@@ -14,6 +14,7 @@ public class Repo {
     private Date creationTime;
     private String updatedBy;
     private Date updateTime;
+    private Set<FileSystem> fileSystemSet;
 
     public Repo(int repositoryId, String name, String description, boolean isActive, String createdBy, Date creationTime, String updatedBy, Date updateTime) {
         this.repositoryId = repositoryId;
@@ -24,6 +25,7 @@ public class Repo {
         this.creationTime = creationTime;
         this.updatedBy = updatedBy;
         this.updateTime = updateTime;
+        this.fileSystemSet = new HashSet<>();
     }
 
     public int getRepositoryId() {
@@ -56,5 +58,22 @@ public class Repo {
 
     public Date getUpdateTime() {
         return updateTime;
+    }
+
+    public Set<FileSystem> getFileSystemSet() {
+        return Optional.ofNullable(fileSystemSet).map(Collections::unmodifiableSet).orElse(Collections.emptySet());
+    }
+
+    public boolean addFileSystem(FileSystem fileSystem) {
+        return this.fileSystemSet.add(fileSystem);
+    }
+
+    public boolean addFileSystems(List<FileSystem> fileSystems, boolean clean) {
+        if(clean) this.fileSystemSet.clear();
+        return this.fileSystemSet.addAll(fileSystems);
+    }
+
+    public boolean addFileSystems(List<FileSystem> fileSystems) {
+        return addFileSystems(fileSystems, false);
     }
 }
