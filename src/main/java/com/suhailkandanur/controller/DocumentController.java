@@ -2,6 +2,7 @@ package com.suhailkandanur.controller;
 
 import com.suhailkandanur.dbaccess.DocumentDAO;
 import com.suhailkandanur.entity.Document;
+import com.suhailkandanur.service.DocumentService;
 import com.suhailkandanur.util.ChecksumUtils;
 import org.apache.tika.Tika;
 import org.slf4j.Logger;
@@ -12,6 +13,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.core.Response;
 import java.io.File;
 import java.io.IOException;
 import java.time.Instant;
@@ -33,6 +37,9 @@ public class DocumentController {
 
     @Autowired
     private DocumentDAO documentDAO;
+
+    @Autowired
+    private DocumentService documentService;
 
     @RequestMapping(value = "/{storeId}/{docRef}", method = RequestMethod.GET)
     public List<Document> getDocumentInStore(@PathVariable int storeId, @PathVariable int docRef) {
@@ -64,6 +71,14 @@ public class DocumentController {
             return -1;
         }
        // return documentDAO.createDocument();
+    }
+
+    @RequestMapping(value="/retrieve/{storeId}/{docRef}", method = RequestMethod.GET)
+    public Response retrieveFile(@PathVariable int storeId, @PathVariable int docRef) throws IOException {
+        File file = documentService.documentAsFile(storeId, docRef);
+        return Response.ok(file, new Tika().detect(file) )
+                .header("Content-Disposition", "attachment; filename=\"" + file.getName() + "\"" ) //optional
+                .build();
     }
 }
 

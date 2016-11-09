@@ -2,6 +2,7 @@ package com.suhailkandanur.controller;
 
 import com.suhailkandanur.dbaccess.RepositoryDAO;
 import com.suhailkandanur.entity.Repo;
+import com.suhailkandanur.service.RepositoryService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +24,9 @@ public class FrescoRepositoryController {
 
     @Autowired
     private RepositoryDAO repositoryDAO;
+
+    @Autowired
+    private RepositoryService repositoryService;
 
     @RequestMapping(method = RequestMethod.GET)
     public List<Repo> getAllRepositories() {

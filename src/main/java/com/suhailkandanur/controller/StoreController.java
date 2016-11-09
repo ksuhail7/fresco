@@ -2,6 +2,7 @@ package com.suhailkandanur.controller;
 
 import com.suhailkandanur.dbaccess.StoreDAO;
 import com.suhailkandanur.entity.Store;
+import com.suhailkandanur.service.StoreService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -21,6 +22,9 @@ public class StoreController {
 
     @Autowired
     private StoreDAO storeDAO;
+
+    @Autowired
+    private StoreService storeService;
 
     @RequestMapping(method = RequestMethod.GET)
     public List<Store> getAllStores() {

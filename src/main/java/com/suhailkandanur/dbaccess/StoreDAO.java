@@ -55,8 +55,15 @@ public class StoreDAO implements InitializingBean {
         this.jdbcTemplate = new JdbcTemplate(dataSource);
     }
 
+    public List<Store> getAllStores(boolean activeOnly) {
+        String SQL = "select * from store";
+        if(activeOnly)
+            SQL = SQL + " where is_active = 1";
+        return this.jdbcTemplate.query(SQL, storeRowMapper);
+    }
+
     public List<Store> getAllStores() {
-        return this.jdbcTemplate.query("select * from store", storeRowMapper);
+        return getAllStores(false);
     }
 
     public Store getStore(int storeId) {

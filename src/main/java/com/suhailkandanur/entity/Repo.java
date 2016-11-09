@@ -1,6 +1,14 @@
 package com.suhailkandanur.entity;
 
+import com.google.common.collect.ImmutableList;
+
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
+
+import static java.util.stream.Collectors.collectingAndThen;
+import static java.util.stream.Collectors.toList;
 
 /**
  * Created by suhail on 2016-11-03.
@@ -69,11 +77,18 @@ public class Repo {
     }
 
     public boolean addFileSystems(List<FileSystem> fileSystems, boolean clean) {
-        if(clean) this.fileSystemSet.clear();
+        if (clean) this.fileSystemSet.clear();
         return this.fileSystemSet.addAll(fileSystems);
     }
 
     public boolean addFileSystems(List<FileSystem> fileSystems) {
         return addFileSystems(fileSystems, false);
+    }
+
+    public List<Path> getActiveLocations() {
+        return getFileSystemSet().parallelStream().filter(fs -> fs.isActive())
+                .map(fs -> Paths.get(fs.getPath()))
+                .filter(Files::exists)
+                .collect(collectingAndThen(toList(), ImmutableList::copyOf));
     }
 }
