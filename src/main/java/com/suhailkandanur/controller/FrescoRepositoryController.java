@@ -1,6 +1,5 @@
 package com.suhailkandanur.controller;
 
-import com.suhailkandanur.dbaccess.RepositoryDAO;
 import com.suhailkandanur.entity.Repo;
 import com.suhailkandanur.service.RepositoryService;
 import org.slf4j.Logger;
@@ -23,24 +22,21 @@ public class FrescoRepositoryController {
     private static Logger logger = LoggerFactory.getLogger(FrescoRepositoryController.class);
 
     @Autowired
-    private RepositoryDAO repositoryDAO;
-
-    @Autowired
     private RepositoryService repositoryService;
 
     @RequestMapping(method = RequestMethod.GET)
     public List<Repo> getAllRepositories() {
-        return repositoryDAO.getAllRepositories();
+        return repositoryService.getAllRepositories();
     }
 
     @RequestMapping(value = "/{id}", method = RequestMethod.GET)
     public Repo getRepository(@PathVariable int id) {
-        return repositoryDAO.getRepository(id).orElse(null);
+        return repositoryService.getRepository(id);
     }
 
     @RequestMapping(method = RequestMethod.POST)
-    public int createRepository(String name, String description) {
-        return repositoryDAO.createRepository(name, description, System.getProperty("user.name"));
+    public int createRepository(String name, String description, String requester, String[] fileSystems) {
+        return repositoryService.createRepository(name, description, requester, fileSystems);
     }
 }
 

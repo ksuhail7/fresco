@@ -1,6 +1,7 @@
 package com.suhailkandanur.service.impl;
 
 import com.suhailkandanur.dbaccess.RepositoryDAO;
+import com.suhailkandanur.dbaccess.impl.RepositoryDAOImpl;
 import com.suhailkandanur.entity.FileSystem;
 import com.suhailkandanur.entity.Repo;
 import com.suhailkandanur.service.RepositoryService;
@@ -11,17 +12,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
-
-import static org.aspectj.weaver.tools.cache.SimpleCacheFactory.path;
 
 /**
  * Created by suhail on 2016-11-08.
@@ -77,7 +74,22 @@ public class RepositoryServiceImpl implements RepositoryService, InitializingBea
 
     }
 
-    public void createRepository() {
+    @Override
+    public int createRepository(String name, String description, String requester, String[] fileSystems) {
+
+       // repositoryDAO.createRepository(name, description, requester);
+
+        //repositoryDAO.cre
         throw new NotImplementedException();
+    }
+
+    @Override
+    public List<Repo> getAllRepositories(boolean includeInActive) {
+        return null;
+    }
+
+    @Override
+    public Repo getRepository(int id) {
+        return null;
     }
 }
