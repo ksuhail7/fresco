@@ -85,10 +85,10 @@ public class Repo {
         return addFileSystems(fileSystems, false);
     }
 
-    public List<Path> getActiveLocations() {
-        return getFileSystemSet().parallelStream().filter(fs -> fs.isActive())
-                .map(fs -> Paths.get(fs.getPath()))
-                .filter(Files::exists)
-                .collect(collectingAndThen(toList(), ImmutableList::copyOf));
-    }
+    // public List<Path> getActiveLocations() {
+    //     return getFileSystemSet().parallelStream().filter(fs -> fs.isActive())
+    //             .map(fs -> Paths.get(fs.getPath()))
+    //             .filter(Files::exists)
+    //             .collect(collectingAndThen(toList(), ImmutableList::copyOf));
+    // }
 }

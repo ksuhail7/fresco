@@ -26,6 +26,7 @@ public class GenIdDAOImpl implements InitializingBean, GenIdDAO {
     public DataSource dataSource;
     private SimpleJdbcCall jdbcCall;
 
+    @Override
     public int generateId(String parameter) {
         SqlParameterSource in = new MapSqlParameterSource()
                 .addValue("parameter", parameter);

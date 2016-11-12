@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Created by suhail on 2016-11-04.
@@ -35,7 +36,8 @@ public class FrescoRepositoryController {
     }
 
     @RequestMapping(method = RequestMethod.POST)
-    public int createRepository(String name, String description, String requester, String[] fileSystems) {
+    public Repo createRepository(String name, String description, String requester, String[] fileSystems) {
+        requester = Optional.ofNullable(requester).orElse(System.getProperty("user.name"));
         return repositoryService.createRepository(name, description, requester, fileSystems);
     }
 }

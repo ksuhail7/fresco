@@ -11,7 +11,7 @@ import java.util.Optional;
  */
 @Component
 public interface RepositoryService {
-    int createRepository(String name, String description, String requester, String[] fileSystems);
+    Repo createRepository(String name, String description, String requester, String[] fileSystems);
 
     default List<Repo> getAllRepositories() {
         return getAllRepositories(false);

@@ -1,7 +1,7 @@
 package com.suhailkandanur.dbaccess.impl;
 
+import com.suhailkandanur.dbaccess.GenIdDAO;
 import com.suhailkandanur.dbaccess.RepositoryDAO;
-import com.suhailkandanur.entity.FileSystem;
 import com.suhailkandanur.entity.Repo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -9,13 +9,12 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.stereotype.Repository;
+import org.springframework.util.ObjectUtils;
 
 import javax.sql.DataSource;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * Created by suhail on 2016-11-03.
@@ -27,37 +26,11 @@ public class RepositoryDAOImpl implements InitializingBean, RepositoryDAO {
     private JdbcTemplate jdbcTemplate;
     private SimpleJdbcInsert jdbcInsert;
 
-    private final static String SELECT_REPO_BASE = "SELECT * FROM repository";
-    private final static String SELECT_ACTIVE_REPO = SELECT_REPO_BASE + " where is_active = 1";
-    private static final String SELECT_REPO_BY_REPOID = SELECT_REPO_BASE + " where id = ? ";
-
-
-    private static final RowMapper<Repo> repositoryRowMapper = (rs, rowNum) -> {
-        return new Repo(rs.getInt("id"),
-                rs.getString("name"),
-                rs.getString("description"),
-                rs.getBoolean("is_active"),
-                rs.getString("created_by"),
-                rs.getDate("creation_date"),
-                rs.getString("updated_by"),
-                rs.getDate("update_date"));
-    };
-
-    private static final RowMapper<FileSystem> fileSystemRowMapper = (rs, rowNum) -> {
-        return new FileSystem(rs.getInt("id"),
-                rs.getString("path"),
-                rs.getBoolean("is_active"),
-                rs.getString("created_by"),
-                rs.getDate("creation_date"),
-                rs.getString("updated_by"),
-                rs.getDate("update_date"));
-    };
-
     @Autowired
     private DataSource dataSource;
 
     @Autowired
-    private GenIdDAOImpl genIdDAO;
+    private GenIdDAO genIdDAO;
 
     @Override
     public void afterPropertiesSet() {
@@ -65,44 +38,43 @@ public class RepositoryDAOImpl implements InitializingBean, RepositoryDAO {
         this.jdbcTemplate = new JdbcTemplate(dataSource);
     }
 
-    public List<FileSystem> getFileSystemsForRepo(int repoId) {
-        return this.jdbcTemplate.query("select fs.* from filesystem fs, repo_fs_mapping rfm " +
-                " where fs.id = rfm.fs_id and rfm.repo_id = ? ", new Object[]{repoId}, fileSystemRowMapper);
-    }
-
-    private List<Repo> getRepositoryGeneric(String sql, Object... args) {
+    private List<Repo> getRepositoryGeneric(String sql, Object[] args) {
         logger.info("calling sql {} with args: {}", sql, args);
-         return Optional.ofNullable(this.jdbcTemplate.query(sql, args == null ? null : new Object[]{args}, repositoryRowMapper))
-                 .orElse(Collections.emptyList())
-                 .parallelStream()
-                 .map(repo -> { repo.addFileSystems(getFileSystemsForRepo(repo.getRepositoryId()), true); return repo;})
-                 .collect(Collectors.toList());
+        return Optional.ofNullable(this.jdbcTemplate.query(sql, args, repositoryRowMapper))
+                .orElse(Collections.emptyList());
+
     }
-    public List<Repo> getAllRepositories(boolean activeOnly) {
-        if (dataSource == null) {
-            logger.error("data source is null");
+
+    @Override
+    public List<Repo> getAllRepositories(boolean includeInActive) {
+        if (includeInActive) {
+            return getRepositoryGeneric(SELECT_REPO_BASE, null);
         }
-        if(activeOnly)
-            return getRepositoryGeneric(SELECT_ACTIVE_REPO, null);
-        return getRepositoryGeneric(SELECT_REPO_BASE, null);
+        return getRepositoryGeneric(SELECT_ACTIVE_REPO, null);
+
     }
 
-    public List<Repo> getAllRepositories() {
-        return getAllRepositories(true);
-    }
-
-    public Optional<Repo> getRepository(int repoId) {
-        List<Repo> repoList = getRepositoryGeneric(SELECT_REPO_BY_REPOID, repoId);
-        if(repoList == null || repoList.isEmpty())
-            return Optional.empty();
-        if(repoList.size() > 1) {
+    @Override
+    public Repo getRepository(int repoId) {
+        List<Repo> repoList = getRepositoryGeneric(SELECT_REPO_BY_REPOID, new Object[]{repoId});
+        if (repoList != null && repoList.size() > 1) {
             logger.error("multiple repositories found for the same id '{}'", repoId);
             throw new IllegalStateException("multiple repositories found for the same id '" + repoId + "'");
         }
-        return Optional.ofNullable(repoList.get(0));
+        return (repoList != null && repoList.size() == 1) ? repoList.get(0) : null;
     }
 
-    public int createRepository(Repo repo) {
+    @Override
+    public Repo getRepository(String name) {
+        List<Repo> repoList = getRepositoryGeneric(SELECT_REPO_BY_NAME, new Object[]{name});
+        if (repoList != null && repoList.size() > 1) {
+            logger.error("multiple repositories found for the same id '{}'", name);
+            throw new IllegalStateException("multiple repositories found for the same id '" + name + "'");
+        }
+        return (repoList != null && repoList.size() == 1) ? repoList.get(0) : null;
+    }
+
+    private Repo createRepository(Repo repo) {
         try {
             Map<String, Object> parameters = new HashMap<>(8);
             parameters.put("id", repo.getRepositoryId());
@@ -115,25 +87,25 @@ public class RepositoryDAOImpl implements InitializingBean, RepositoryDAO {
             parameters.put("updated_by", repo.getUpdatedBy());
             int rowsInserted = this.jdbcInsert.execute(parameters);
             if (rowsInserted == 1) {
-                logger.info("repo with id '{}' created, no. of rows affected - {}", repo.getRepositoryId(), rowsInserted);
-                return repo.getRepositoryId();
+                logger.info("repo with id '{}' created, no. of rows affected {}", repo.getRepositoryId(), rowsInserted);
+                return repo;
             }
-        } catch(DataAccessException dae) {
+        } catch (DataAccessException dae) {
             logger.error("unable to create repo, error: {}", dae.getMessage());
         }
-        return -1;
+        return null;
     }
 
-    public int createRepository(String name, String description, String requestor) {
+    @Override
+    public Repo createRepository(String name, String description, String requestor) {
+        Objects.requireNonNull(requestor);
+        Objects.requireNonNull(name);
         Date now = new Date();
         Repo repo = new Repo(genIdDAO.generateId("repository_id"), name, description, true, requestor, now, requestor, now);
         return createRepository(repo);
     }
 
-    public void updateRepository(Repo repo) {
-
-    }
-
+    @Override
     public boolean deleteRepository(int id) {
         try {
             int rowsDeleted = this.jdbcTemplate.update("delete from repository where id = ?", id);
@@ -149,3 +121,4 @@ public class RepositoryDAOImpl implements InitializingBean, RepositoryDAO {
         return false;
     }
 }
+
