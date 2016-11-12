@@ -110,14 +110,16 @@ public class RepositoryServiceImpl implements RepositoryService, InitializingBea
     @Override
     public Repo getRepository(int id) {
         final Repo repository = repositoryDAO.getRepository(id);
-        repository.addFileSystems(getMappedFileSystems(repository));
+        if(repository != null)
+            repository.addFileSystems(getMappedFileSystems(repository));
         return repository;
     }
 
     private List<FileSystem> getMappedFileSystems(Repo repo) {
-        return repoFileSystemMappingDAO.getMappedFileSystems(repo.getRepositoryId()).stream()
+        return (repo != null) ? repoFileSystemMappingDAO.getMappedFileSystems(repo.getRepositoryId()).stream()
                 .filter(repoFsMapping -> repoFsMapping.isActive())
                 .map(repoFsMapping -> fileSystemDAO.getFileSystem(repoFsMapping.getFsId()))
-                .collect(Collectors.collectingAndThen(Collectors.toList(), Collections::unmodifiableList));
+                .collect(Collectors.collectingAndThen(Collectors.toList(), Collections::unmodifiableList))
+                : Collections.emptyList();
     }
 }
