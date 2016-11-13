@@ -79,15 +79,17 @@ public class Document {
         return Collections.unmodifiableList(Arrays.asList(documentVersions.toArray(new DocumentVersion[0])));
     }
 
-    public void addVersion(DocumentVersion docVersion) {
+    public Document addVersion(DocumentVersion docVersion) {
         this.documentVersions.add(docVersion);
+        return this;
     }
 
-    public void addVersions(List<DocumentVersion> docVerList) {
+    public Document addVersions(List<DocumentVersion> docVerList) {
         this.documentVersions.addAll(docVerList);
+        return this;
     }
 
-    public void addVersion(DocumentVersion[] docVerArray) {
-        addVersions(Arrays.asList(docVerArray));
+    public Document addVersion(DocumentVersion[] docVerArray) {
+        return addVersions(Arrays.asList(docVerArray));
     }
 }

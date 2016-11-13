@@ -1,5 +1,6 @@
 package com.suhailkandanur.dbaccess.impl;
 
+import com.suhailkandanur.dbaccess.RepositoryDAO;
 import com.suhailkandanur.dbaccess.StoreDAO;
 import com.suhailkandanur.entity.Store;
 import org.slf4j.Logger;
@@ -16,60 +17,72 @@ import org.springframework.stereotype.Repository;
 
 import javax.sql.DataSource;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Created by suhail on 2016-11-03.
  */
 @Repository
-public class StoreDAOImpl implements InitializingBean, StoreDAO {
+public class StoreDAOImpl implements StoreDAO {
 
     private static final Logger logger = LoggerFactory.getLogger(StoreDAOImpl.class);
-
-    private static final RowMapper<Store> storeRowMapper = (rs, rowNum) -> {
-        Store store = new Store(rs.getInt("id"),
-                rs.getInt("repo_id"),
-                rs.getString("name"),
-                rs.getString("description"),
-                rs.getBoolean("is_active"),
-                rs.getString("created_by"),
-                rs.getDate("creation_date"),
-                rs.getString("updated_by"),
-                rs.getDate("update_date"));
-        return store;
-    };
 
     private SimpleJdbcInsert jdbcInsert;
     private JdbcTemplate jdbcTemplate;
 
     @Autowired
-    private DataSource dataSource;
-
-    @Autowired
     private GenIdDAOImpl genIdDAO;
 
-    @Override
-    public void afterPropertiesSet() {
+    @Autowired
+    private RepositoryDAO repositoryDAO;
+
+    @Autowired
+    public void setDataSource(DataSource dataSource) {
         this.jdbcInsert = new SimpleJdbcInsert(dataSource).withTableName("store");
         this.jdbcTemplate = new JdbcTemplate(dataSource);
     }
 
-    public List<Store> getAllStores(boolean activeOnly) {
-        String SQL = "select * from store";
-        if(activeOnly)
-            SQL = SQL + " where is_active = 1";
-        return this.jdbcTemplate.query(SQL, storeRowMapper);
+    @Override
+    public List<Store> getAllStores(boolean includeInactive) {
+        final List<Store> storeList = this.jdbcTemplate.query(QUERY_STORE_BASE, storeRowMapper);
+        if(!includeInactive) //filter active stores
+            return storeList.stream().filter(store -> store.isActive()).collect(Collectors.collectingAndThen(Collectors.toList(), Collections::unmodifiableList));
+        return storeList;
     }
 
-    public List<Store> getAllStores() {
-        return getAllStores(false);
-    }
-
+    @Override
     public Store getStore(int storeId) {
-        return this.jdbcTemplate.queryForObject("select * from store where id = ? ", new Object[] {storeId}, storeRowMapper);
+        return getStoreGeneric(QUERY_STORE_BY_ID, new Object[]{storeId});
 
     }
 
-    public int createStore(Store store) {
+    @Override
+    public Store getStore(String name) {
+        return getStoreGeneric(QUERY_STORE_BY_NAME, new Object[] {name});
+    }
+
+    private Store getStoreGeneric(String sql, Object[] args) {
+        final List<Store> storeList = this.jdbcTemplate.query(sql, args, storeRowMapper);
+        return (storeList != null && storeList.size() == 1) ? storeList.get(0) : null;
+
+    }
+
+    @Override
+    public Store createStore(int repoId, String name, String description, String requester) {
+        Objects.requireNonNull(requester);
+        Objects.requireNonNull(name);
+        if(getStore(name) != null)
+            throw new IllegalStateException("store already exists with name '" + name + "'");
+        if(repositoryDAO.getRepository(repoId) == null) {
+            throw new IllegalStateException("repository id '" + repoId + "' does not exist");
+        }
+        int storeId = genIdDAO.generateId("store_id");
+        Date now = new Date();
+        Store store = new Store(storeId, repoId, name, description, true, requester, now, requester, now);
+        return createStore(store);
+    }
+
+    private Store createStore(final Store store) {
         SqlParameterSource parameters = new MapSqlParameterSource()
                 .addValue("id", store.getStoreId())
                 .addValue("name", store.getName())
@@ -83,21 +96,11 @@ public class StoreDAOImpl implements InitializingBean, StoreDAO {
             int rowsInserted = this.jdbcInsert.execute(parameters);
             if (rowsInserted == 1) {
                 logger.info("store with id '{}' created, no. of rows inserted {}", store.getStoreId(), rowsInserted);
-                return store.getStoreId();
+                return store;
             }
         } catch(DataAccessException dae) {
             logger.error("unable to create store with id '{}', error: {}", store.getStoreId(), dae.getMessage());
         }
-        return -1;
+        return null;
     }
-
-    public int createStore(String storeName, String description, int repoId, String requester) {
-        Date now = new Date();
-        Store store = new Store(genIdDAO.generateId("store_id"), repoId, storeName, description, true, requester, now, requester, now);
-        return createStore(store);
-    }
-
-   // public boolean updateStore(Store store) {
-     //   return false;
-    //}
 }

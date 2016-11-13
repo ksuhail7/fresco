@@ -20,20 +20,17 @@ import java.util.*;
  * Created by suhail on 2016-11-03.
  */
 @Repository
-public class RepositoryDAOImpl implements InitializingBean, RepositoryDAO {
+public class RepositoryDAOImpl implements RepositoryDAO {
 
     private static Logger logger = LoggerFactory.getLogger(RepositoryDAOImpl.class);
     private JdbcTemplate jdbcTemplate;
     private SimpleJdbcInsert jdbcInsert;
 
     @Autowired
-    private DataSource dataSource;
-
-    @Autowired
     private GenIdDAO genIdDAO;
 
-    @Override
-    public void afterPropertiesSet() {
+    @Autowired
+    public void setDataSource(DataSource dataSource) {
         this.jdbcInsert = new SimpleJdbcInsert(dataSource).withTableName("repository");
         this.jdbcTemplate = new JdbcTemplate(dataSource);
     }

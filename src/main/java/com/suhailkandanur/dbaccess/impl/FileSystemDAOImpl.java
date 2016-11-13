@@ -22,20 +22,17 @@ import java.util.stream.Collectors;
  * Created by suhail on 2016-11-09.
  */
 @Service
-public class FileSystemDAOImpl implements InitializingBean, FileSystemDAO {
+public class FileSystemDAOImpl implements FileSystemDAO {
     private static final Logger logger = LoggerFactory.getLogger(FileSystemDAOImpl.class);
 
     private SimpleJdbcInsert fileSystemInsertCall;
     private JdbcTemplate jdbcTemplate;
 
     @Autowired
-    private DataSource dataSource;
-
-    @Autowired
     private GenIdDAO genIdDAO;
 
-    @Override
-    public void afterPropertiesSet() {
+    @Autowired
+    public void setDataSource(DataSource dataSource) {
         this.jdbcTemplate = new JdbcTemplate(dataSource);
         this.fileSystemInsertCall = new SimpleJdbcInsert(dataSource).withTableName("filesystem");
     }

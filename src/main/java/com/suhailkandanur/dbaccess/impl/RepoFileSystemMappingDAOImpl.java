@@ -20,18 +20,15 @@ import java.util.List;
  * Created by suhail on 2016-11-11.
  */
 @Repository
-public class RepoFileSystemMappingDAOImpl implements InitializingBean, RepoFileSystemMappingDAO {
+public class RepoFileSystemMappingDAOImpl implements RepoFileSystemMappingDAO {
 
     private static final Logger logger = LoggerFactory.getLogger(RepoFileSystemMappingDAOImpl.class);
-
-    @Autowired
-    private DataSource dataSource;
 
     private SimpleJdbcInsert jdbcInsert;
     private JdbcTemplate jdbcTemplate;
 
-    @Override
-    public void afterPropertiesSet() {
+    @Autowired
+    public void setDataSource(DataSource dataSource) {
         this.jdbcInsert = new SimpleJdbcInsert(dataSource).withTableName("repo_fs_mapping");
         this.jdbcTemplate = new JdbcTemplate(dataSource);
     }

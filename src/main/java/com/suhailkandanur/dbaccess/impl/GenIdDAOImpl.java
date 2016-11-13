@@ -20,10 +20,8 @@ import java.util.Map;
  * Created by suhail on 2016-11-05.
  */
 @Repository
-public class GenIdDAOImpl implements InitializingBean, GenIdDAO {
+public class GenIdDAOImpl implements GenIdDAO {
     private static final Logger logger = LoggerFactory.getLogger(GenIdDAOImpl.class);
-    @Autowired
-    public DataSource dataSource;
     private SimpleJdbcCall jdbcCall;
 
     @Override
@@ -34,8 +32,8 @@ public class GenIdDAOImpl implements InitializingBean, GenIdDAO {
         return (int) output.get("value");
     }
 
-    @Override
-    public void afterPropertiesSet() throws Exception {
+    @Autowired
+    public void setDataSource(DataSource dataSource) {
         this.jdbcCall = new SimpleJdbcCall(dataSource).withProcedureName("gen_id")
                 .withoutProcedureColumnMetaDataAccess()
                 .useInParameterNames("parameter")

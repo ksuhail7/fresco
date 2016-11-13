@@ -11,7 +11,7 @@ import java.util.List;
  */
 @Service
 public interface StoreService {
-    int createStore(String name, String description, int repoId, String requester);
+    Store createStore(String name, String description, int repoId, String requester);
 
     default List<Store> getAllStores() {
         return getAllStores(false);
@@ -20,4 +20,6 @@ public interface StoreService {
     List<Store> getAllStores(boolean includeInactive);
 
     Store getStore(int storeId);
+
+    Store getStore(String name);
 }

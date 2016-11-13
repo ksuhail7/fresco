@@ -18,194 +18,82 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.sql.DataSource;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
  * Created by suhail on 2016-11-03.
  */
 @Repository
-public class DocumentDAOImpl implements InitializingBean, DocumentDAO {
+public class DocumentDAOImpl implements DocumentDAO {
 
     private static final Logger logger = LoggerFactory.getLogger(DocumentDAOImpl.class);
 
-    private static final String SELECT_DOC_QUERY_BASE = "SELECT docref, storeid, docid, docid_sha1, created_by, creation_date, updated_by, update_date, is_active " +
-            " FROM document ";
-    private static final String SELECT_DOC_BY_DOCREF = SELECT_DOC_QUERY_BASE + " WHERE storeid = ? and docref = ?";
-    private static final String SELECT_DOC_BY_DOCID = SELECT_DOC_QUERY_BASE + " WHERE storeid = ? and docid = ?";
-    private static final String SELECT_DOC_BY_STOREID = SELECT_DOC_QUERY_BASE + " WHERE storeid = ?";
-
-    private static final String SELECT_DOC_VERSION_QUERY_BASE = "SELECT docref, version, filename, filesize_in_bytes, mimetype, sha1_checksum, creation_date, created_by, update_date, updated_by, is_active " +
-            " FROM document_version";
-    private static final String SELECT_DOC_VERSION_BY_DOCREF = SELECT_DOC_VERSION_QUERY_BASE + " WHERE docref = ?";
-
-    private static final String SELECT_DOC_VERSION_BY_DOCREF_AND_VERSION = SELECT_DOC_VERSION_BY_DOCREF + " and version = ?";
-
-
-    private static final RowMapper<Document> docRowMapper = (rs, rowNum) -> {
-        return new Document(rs.getInt("docref"),
-                rs.getInt("storeid"),
-                rs.getString("docid"),
-                rs.getString("docid_sha1"),
-                rs.getString("created_by"),
-                rs.getDate("creation_date"),
-                rs.getString("updated_by"),
-                rs.getDate("update_date"),
-                rs.getBoolean("is_active"));
-    };
-
-    private static final RowMapper<DocumentVersion> docVersionRowMapper = (rs, rowNum) -> {
-        return new DocumentVersion(rs.getInt("docref"),
-                rs.getLong("version"),
-                rs.getString("filename"),
-                rs.getLong("filesize_in_bytes"),
-                rs.getString("mimetype"),
-                rs.getString("sha1_checksum"),
-                rs.getDate("creation_date"),
-                rs.getString("created_by"),
-                rs.getDate("update_date"),
-                rs.getString("updated_by"),
-                rs.getBoolean("is_active")
-        );
-    };
-
     private JdbcTemplate jdbcTemplate;
     private SimpleJdbcInsert insertDocumentJdbc;
-    private SimpleJdbcInsert insertDocumentVersionJdbc;
 
-
-    @Autowired
-    private PlatformTransactionManager transactionManager;
-
-    @Autowired
-    private DataSource dataSource;
 
     @Autowired
     private GenIdDAOImpl genIdDAO;
 
-
-    /**
-     * IN docid varchar(128),
-     * IN storeid int,
-     * IN docid_sha1 varchar(40),
-     * IN version long,
-     * IN filename varchar(128),
-     * IN filesize int,
-     * IN mimetype varchar(128),
-     * IN sha1cksum varchar(40),
-     * IN requestor varchar(64),
-     * IN is_active boolean,
-     * OUT docref int
-     *
-     * @throws Exception
-     */
-    @Override
-    public void afterPropertiesSet() throws Exception {
+    @Autowired
+    public void setDataSource(final DataSource dataSource) throws Exception {
         this.jdbcTemplate = new JdbcTemplate(dataSource);
         this.insertDocumentJdbc = new SimpleJdbcInsert(dataSource).withTableName("document");
-        this.insertDocumentVersionJdbc = new SimpleJdbcInsert(dataSource).withTableName("document_version");
 
-    }
-
-
-    private List<Document> getDocumentsByQuery(String query, Object... args) {
-        return Optional.ofNullable(this.jdbcTemplate.query(query, args, docRowMapper)).orElse(Collections.emptyList()).parallelStream().map(document -> {
-            document.addVersions(getDocumentVersions(document.getDocRef()));
-            return document;
-        }).collect(Collectors.toList());
-    }
-
-    public List<Document> getAllDocumentsInStore(int storeId) {
-        return Collections.unmodifiableList(getDocumentsByQuery(SELECT_DOC_BY_STOREID, storeId));
-    }
-
-    public List<Document> getDocumentsFromStore(int storeId, String docId) {
-        return Collections.unmodifiableList(getDocumentsByQuery(SELECT_DOC_BY_DOCID, storeId, docId));
-
-    }
-
-    public List<Document> getDocumentsFromStore(int storeId, int docRef) {
-        return Collections.unmodifiableList(getDocumentsByQuery(SELECT_DOC_BY_DOCREF, storeId, docRef));
-    }
-
-    public Optional<DocumentVersion> getDocumentVersion(int docRef, long version) {
-        try {
-            return Optional.ofNullable(this.jdbcTemplate.queryForObject(SELECT_DOC_VERSION_BY_DOCREF_AND_VERSION, new Object[]{docRef, version}, docVersionRowMapper));
-        } catch (DataAccessException dae) {
-            return Optional.empty();
-        }
-    }
-
-    private List<DocumentVersion> getDocumentVersions(int docRef) {
-        return Optional.ofNullable(this.jdbcTemplate.query(SELECT_DOC_VERSION_BY_DOCREF, new Object[]{docRef}, docVersionRowMapper))
-                .map(Collections::unmodifiableList)
-                .orElse(Collections.emptyList());
-    }
-
-    private Optional<Integer> getDocRefForDocId(int storeId, String docId) {
-        try {
-            return Optional.ofNullable(this.jdbcTemplate.queryForObject("select docref from document where storeid = ? and docid = ?", new Object[]{storeId, docId}, Integer.class));
-        } catch (DataAccessException dae) {
-            return Optional.empty();
-        }
-    }
-
-
-    @Transactional
-    public int createDocument(String docId, int storeId, String docIdSha1, long version, String filename, long filesize, String mimetype, String sha1Cksum, String requestor, boolean isActive) {
-        Date createDate = new Date();
-        //Map<String, Object> out = createDocumentJdbcCall.execute(params);
-        Optional<Integer> docRefOptional = getDocRefForDocId(storeId, docId);
-        int docRef = docRefOptional.orElse(-1);
-        if (docRef == -1) {
-            docRef = genIdDAO.generateId("document_ref");
-            //insert into document object
-            MapSqlParameterSource docParams = new MapSqlParameterSource().addValue("docref", docRef)
-                    .addValue("docid", docId)
-                    .addValue("storeid", storeId)
-                    .addValue("docid_sha1", docIdSha1)
-                    .addValue("created_by", requestor)
-                    .addValue("creation_date", createDate)
-                    .addValue("update_date", createDate)
-                    .addValue("updated_by", requestor)
-                    .addValue("is_active", isActive);
-            int noRows = insertDocumentJdbc.execute(docParams);
-            logger.info("record inserted into document table, no. of rows affected {}", noRows);
-        }
-      //  try {
-            //document already present, insert into document_version
-            if (getDocumentVersion(docRef, version) != null) {
-                SqlParameterSource params = new MapSqlParameterSource()
-                        .addValue("docref", docRef)
-                        .addValue("version", version)
-                        .addValue("filename", filename)
-                        .addValue("filesize_in_bytes", filesize)
-                        .addValue("mimetype", mimetype)
-                        .addValue("sha1_checksum", sha1Cksum)
-                        .addValue("creation_date", createDate)
-                        .addValue("created_by", requestor)
-                        .addValue("update_date", createDate)
-                        .addValue("updated_by", requestor)
-                        .addValue("is_active", isActive);
-
-                int noRows = insertDocumentVersionJdbc.execute(params);
-                logger.info("record inserted into document_version table, no. of rows affected {}", noRows);
-                return docRef;
-            } else {
-                logger.error("document version with docref '{}' and version '{}' already exists", docRef, version);
-                return -1;
-            }
-       // } catch(DataAccessException dae) {
-         //   logger.error("error creating record in document_version table, error: {}", dae.getMessage());
-           // return -1;
-        //}
     }
 
     @Override
     public boolean exists(int storeId, String docId) {
-        return false;
+        return getDocument(storeId, docId) != null;
+    }
+
+    @Override
+    public List<Document> getDocumentList(int storeId, boolean includeInActive) {
+        final List<Document> documentList = this.jdbcTemplate.query(QUERY_DOC_BY_STOREID, new Object[]{storeId}, docRowMapper);
+        if(!includeInActive) {
+            return documentList.stream().filter(document -> document.isActive()).collect(Collectors.collectingAndThen(Collectors.toList(), Collections::unmodifiableList));
+        }
+        return documentList;
+    }
+
+    @Override
+    public Document getDocument(int storeId, String docId) {
+        try {
+            return this.jdbcTemplate.queryForObject(QUERY_DOC_BY_STOREID_AND_DOCID, new Object[]{storeId, docId}, docRowMapper);
+        } catch(DataAccessException dae) {
+            logger.error("unable to find document with docid {} inside store '{}'", docId, storeId);
+            return null;
+        }
+    }
+
+    @Override
+    public Document createDocument(int storeId, String docId, String docIdSha1, String requester) {
+        Objects.requireNonNull(requester);
+        Objects.requireNonNull(docId);
+        Objects.requireNonNull(docIdSha1);
+        if(exists(storeId, docId)) {
+            throw new IllegalStateException("document with id '" + docId + "' already defined for store '" + storeId + "'");
+        }
+        int docRef = genIdDAO.generateId("doc_ref");
+        Date now = new Date();
+        Document document = new Document(docRef, storeId, docId, docIdSha1, requester, now, requester, now, true);
+        MapSqlParameterSource source = new MapSqlParameterSource()
+                .addValue("docref", docRef)
+                .addValue("storeid", storeId)
+                .addValue("docid", docId)
+                .addValue("docid_sha1", docIdSha1)
+                .addValue("is_active", true)
+                .addValue("creation_date", now)
+                .addValue("created_by", requester)
+                .addValue("update_date", now)
+                .addValue("updated_by", requester);
+        final int noOfRows = this.insertDocumentJdbc.execute(source);
+        if(noOfRows < 1) {
+            logger.error("unable to insert record for docid {} into document table", docId);
+            return null;
+        }
+        logger.info("document with docid '{}' successfully inserted into db, no. of rows affected {}", docId, noOfRows);
+        return document;
     }
 }

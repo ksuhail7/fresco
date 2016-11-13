@@ -34,7 +34,8 @@ public class StoreController {
     }
 
     @RequestMapping(method = RequestMethod.POST)
-    public int createStore(int repoId, String name, String description, String requester) {
+    public Store createStore(int repoId, String name, String description, String requester) {
+        requester = Optional.ofNullable(requester).orElse(System.getProperty("user.name"));
         return storeService.createStore(name, description, repoId, requester);
     }
 }
