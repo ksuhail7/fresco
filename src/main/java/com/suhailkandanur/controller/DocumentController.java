@@ -8,14 +8,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import javax.ws.rs.Path;
 import javax.ws.rs.core.Response;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
-
-import static com.suhailkandanur.util.ChecksumUtils.sha1;
 
 /**
  * Created by suhail on 2016-11-06.
@@ -34,7 +31,7 @@ public class DocumentController {
     //     return documentService.get(storeId, docRef);
     // }
 
-    @RequestMapping(value="/{storeId}/{docId}", method = RequestMethod.GET)
+    @RequestMapping(value = "/{storeId}/{docId}", method = RequestMethod.GET)
     public Document getDocumentInStore(@PathVariable int storeId, @PathVariable String docId) {
         return documentService.getDocumentFromStore(storeId, docId);
     }
@@ -49,7 +46,7 @@ public class DocumentController {
         requester = Optional.ofNullable(requester).orElse(System.getProperty("user.name"));
         try {
             return documentService.createDocument(filePath, storeId, requester);
-        } catch(IOException ioe) {
+        } catch (IOException ioe) {
             logger.error("unable to create document, error: {}", ioe.getMessage());
             return null;
         }
