@@ -1,11 +1,12 @@
 package com.suhailkandanur.entity;
 
+import java.io.Serializable;
 import java.util.Date;
 
 /**
  * Created by suhail on 2016-11-03.
  */
-public class FileSystem {
+public class FileSystem implements Serializable {
     private int filesystemId;
     private String path;
     private boolean isActive;

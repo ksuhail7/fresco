@@ -1,10 +1,15 @@
 package com.suhailkandanur.service.impl;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.rabbitmq.client.Channel;
+import com.rabbitmq.client.Connection;
+import com.rabbitmq.client.ConnectionFactory;
 import com.suhailkandanur.dbaccess.FileSystemDAO;
 import com.suhailkandanur.dbaccess.RepoFileSystemMappingDAO;
 import com.suhailkandanur.dbaccess.RepositoryDAO;
 import com.suhailkandanur.entity.FileSystem;
 import com.suhailkandanur.entity.Repo;
+import com.suhailkandanur.messaging.Publisher;
 import com.suhailkandanur.service.RepositoryService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,6 +22,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -39,6 +45,9 @@ public class RepositoryServiceImpl implements RepositoryService, InitializingBea
 
     @Autowired
     private RepoFileSystemMappingDAO repoFileSystemMappingDAO;
+
+    @Autowired
+    private Publisher publisher;
 
     @Override
     public void afterPropertiesSet() {
@@ -94,6 +103,12 @@ public class RepositoryServiceImpl implements RepositoryService, InitializingBea
                 .filter(fileSystem -> !repoFileSystemMappingDAO.isRepoMappedToFileSystem(repoId, fileSystem.getFilesystemId()))
                 .forEach(fileSystem -> repoFileSystemMappingDAO.createMapping(repoId, fileSystem.getFilesystemId(), requester));
         repo.addFileSystems(getMappedFileSystems(repo));
+        try {
+            publisher.publishBroadcast("fresco", new ObjectMapper().writeValueAsBytes(repo));
+        } catch (IOException e) {
+            logger.error("unable to publish message, error: {}", e.getMessage());
+            e.printStackTrace();
+        }
         return repo;
     }
 

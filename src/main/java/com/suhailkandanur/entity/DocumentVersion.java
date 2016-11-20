@@ -1,11 +1,12 @@
 package com.suhailkandanur.entity;
 
+import java.io.Serializable;
 import java.util.Date;
 
 /**
  * Created by suhail on 2016-11-06.
  */
-public class DocumentVersion {
+public class DocumentVersion implements Serializable {
     private int docRef;
     private long version;
     private String fileName;

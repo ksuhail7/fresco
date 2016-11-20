@@ -1,11 +1,12 @@
 package com.suhailkandanur.entity;
 
+import java.io.Serializable;
 import java.util.*;
 
 /**
  * Created by suhail on 2016-11-03.
  */
-public class Document {
+public class Document implements Serializable {
     private int docRef;
     private int storeId;
     private String docId;

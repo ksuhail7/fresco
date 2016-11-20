@@ -2,6 +2,7 @@ package com.suhailkandanur.entity;
 
 import com.google.common.collect.ImmutableList;
 
+import java.io.Serializable;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -13,7 +14,7 @@ import static java.util.stream.Collectors.toList;
 /**
  * Created by suhail on 2016-11-03.
  */
-public class Repo {
+public class Repo implements Serializable {
     private int repositoryId;
     private String name;
     private String description;

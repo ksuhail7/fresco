@@ -1,11 +1,12 @@
 package com.suhailkandanur.entity;
 
+import java.io.Serializable;
 import java.util.Date;
 
 /**
  * Created by suhail on 2016-11-03.
  */
-public class Store {
+public class Store  implements Serializable {
     private int storeId;
     private int repositoryId;
     private String name;
