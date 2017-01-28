@@ -2,10 +2,8 @@ package com.suhailkandanur.filesystem.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fasterxml.jackson.databind.util.JSONPObject;
 import com.suhailkandanur.entity.Document;
 import com.suhailkandanur.entity.DocumentVersion;
-import com.suhailkandanur.entity.Repo;
 import com.suhailkandanur.entity.Store;
 import com.suhailkandanur.filesystem.FileSystemManager;
 import com.suhailkandanur.util.ChecksumUtils;
@@ -15,15 +13,11 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.File;
-import java.io.IOError;
 import java.io.IOException;
-import java.nio.file.*;
-import java.nio.file.attribute.FileAttribute;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Objects;
-import java.util.UUID;
-import java.util.zip.Checksum;
-
-import static com.sun.tools.doclint.Entity.rho;
 
 /**
  * Created by suhail on 2016-11-15.
@@ -128,8 +122,6 @@ public class FileSystemManagerImpl implements FileSystemManager {
             logger.error("unable to create symlink, error: {}", ex.getMessage());
             throw ex;
         }
-        //point 'current' to the latest one
-        //this should be an atomic operation
     }
 
 
